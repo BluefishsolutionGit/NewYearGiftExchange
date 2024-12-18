@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Year Gift Exchange Draw</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+            background-image: linear-gradient(to bottom right, #ff6b6b, #4ecdc4);
+            color: white;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .lists-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .list {
+            width: 45%;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .list ul {
+            list-style-type: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .list li {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .list li.matched {
+            opacity: 0.5;
+            text-decoration: line-through;
+            pointer-events: none;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #drawDisplay {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            min-height: 100px;
+        }
+
+        #resultList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #resultList li {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>New Year Gift Exchange 🎁</h1>
+
+        <div class="input-section">
+            <input type="text" id="nameInput" placeholder="ใส่ชื่อ">
+            <input type="text" id="giftInput" placeholder="ใส่ของขวัญ">
+            <button id="addBtn" class="btn">เพิ่ม</button>
+        </div>
+
+        <div class="lists-container">
+            <div class="list">
+                <h2>รายชื่อ</h2>
+                <ul id="nameList"></ul>
+            </div>
+            <div class="list">
+                <h2>ของขวัญ</h2>
+                <ul id="giftList"></ul>
+            </div>
+        </div>
+
+        <button id="drawBtn" class="btn">สุ่มชื่อ</button>
+
+        <div id="drawDisplay">กดสุ่มชื่อเพื่อเริ่ม</div>
+
+        <div id="matchDisplay">
+            <h3>ผลการสุ่ม</h3>
+            <ul id="resultList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const nameInput = document.getElementById('nameInput');
+        const giftInput = document.getElementById('giftInput');
+        const addBtn = document.getElementById('addBtn');
+        const nameList = document.getElementById('nameList');
+        const giftList = document.getElementById('giftList');
+        const drawBtn = document.getElementById('drawBtn');
+        const drawDisplay = document.getElementById('drawDisplay');
+        const resultList = document.getElementById('resultList');
+
+        let names = [];
+        let gifts = [];
+        let matchedNames = [];  // Track matched names
+        let matchedGifts = [];  // Track matched gifts
+
+        // Add name and gift
+        addBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            const gift = giftInput.value.trim();
+
+            if (name && gift) {
+                // Add name
+                const nameItem = document.createElement('li');
+                nameItem.textContent = name;
+                nameList.appendChild(nameItem);
+                names.push(name);
+
+                // Add gift
+                const giftItem = document.createElement('li');
+                giftItem.textContent = gift;
+                giftList.appendChild(giftItem);
+                gifts.push(gift);
+
+                // Clear inputs
+                nameInput.value = '';
+                giftInput.value = '';
+            }
+        });
+
+        // Random draw function
+        drawBtn.addEventListener('click', () => {
+            // Check if we have names and gifts
+            if (names.length === 0 || gifts.length === 0) {
+                alert('กรุณาเพิ่มชื่อและของขวัญก่อน');
+                return;
+            }
+
+            // Ensure equal number of names and gifts
+            if (names.length !== gifts.length) {
+                alert('จำนวนชื่อและของขวัญต้องเท่ากัน');
+                return;
+            }
+
+            // Find available names and gifts (names and gifts that haven't been matched yet)
+            const availableNames = names.filter(name => !matchedNames.includes(name));
+            const availableGifts = gifts.filter(gift => !matchedGifts.includes(gift));
+
+            // Check if all names are matched
+            if (availableNames.length === 0) {
+                alert('สุ่มครบทุกคนแล้ว!');
+                drawBtn.disabled = true;
+                return;
+            }
+
+            // Select a random name and gift
+            let randomName, selectedGift;
+            do {
+                const randomIndex = Math.floor(Math.random() * availableNames.length);
+                randomName = availableNames[randomIndex];
+
+                // Select a random gift from the remaining available gifts
+                const giftIndex = Math.floor(Math.random() * availableGifts.length);
+                selectedGift = availableGifts[giftIndex];
+            } while (randomName === selectedGift);  // Ensure name and gift are not the same
+
+            // Update display
+            drawDisplay.innerHTML = `กำลังสุ่ม... <br>🎲 ${randomName}`;
+
+            // Delay to simulate drawing
+            setTimeout(() => {
+                // Create result item
+                const resultItem = document.createElement('li');
+                resultItem.textContent = `🎁 ${randomName} ได้: ${selectedGift}`;
+                resultList.appendChild(resultItem);
+
+                // Mark the matched name and gift
+                matchedNames.push(randomName);
+                matchedGifts.push(selectedGift);
+
+                // Mark as matched in the lists
+                const nameItems = Array.from(nameList.children);
+                const giftItems = Array.from(giftList.children);
+
+                const matchedNameItem = nameItems.find(item => item.textContent === randomName);
+                const matchedGiftItem = giftItems.find(item => item.textContent === selectedGift);
+
+                matchedNameItem.classList.add('matched');
+                matchedGiftItem.classList.add('matched');
+
+                // Update display
+                drawDisplay.textContent = `${randomName} ได้ของขวัญ: ${selectedGift}`;
+            }, 1000);
+        });
+
+    </script>
+</body>
+
+</html>
